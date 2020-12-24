@@ -14,7 +14,7 @@ print("Henry Lu's FEM Module 已导入！")
 class FEM:
 # TODO:输入部分
     def __init__(self,geometric,unit,force,constraint=dict(NR=[],DX=[]),dim = 3):
-        if dim == 3:
+        if dim == 3 or dim == 2:
             self.dim = dim
             self.type = list(unit.keys())[0]
             self.err, self.largeNumber = 1e-10, 1e25
@@ -32,14 +32,15 @@ class FEM:
                 if i == "node":
                     self.nodeForce(force["node"])
             print("计算问题为",dim,"维问题...")
-        elif dim == 2:
-            raise NameError("暂未开发!")
         else: 
             raise NameError("维度有误！")
     
     def geometric(self,X=None):
-        self.geo["X"] = np.array(X)
-        if self.geo["X"].shape[0] == self.dim:
+        if self.dim == 2:
+            self.geo["X"] = np.vstack([np.array(X),np.zeros(len(X[0]))])
+        elif self.dim == 3:
+            self.geo["X"] = np.array(X)
+        if self.geo["X"].shape[0] == 3:
             print("一共",self.geo["X"].shape[1],"节点...")
         else:
             raise NameError("几何数据输入有误！")
@@ -68,16 +69,25 @@ class FEM:
         else:
             raise NameError("单元数据输入有误！")
         
-    def constraint(self, NR, DX = None):
-        self.con["NR"] = np.array(NR, dtype = "int") -1
-        self.con["DX"] = np.zeros(self.dim * self.geo["X"].shape[1]) if DX == None else np.array(DX)
+    def constraint(self, NR, DX):
+        if self.dim == 3:
+            self.con["NR"] = np.array(NR, dtype = "int") -1
+            self.con["DX"] = np.array(DX)
+        elif self.dim == 2:
+            NR = np.array(NR, dtype = "int") -1
+            NR = NR//2*3 + NR%2
+            self.con["NR"] = np.hstack([NR,np.arange(self.geo['X'].shape[1])*3+2])
+            self.con["DX"] = np.hstack([np.array(DX),np.zeros(self.geo['X'].shape[1])*3])
         print("一共",self.con["NR"].shape[0],"约束...")
-        if self.con["NR"].max() >= self.dim * self.geo["X"].shape[1] or self.con["NR"].min()<0:
+        if self.con["NR"].max() >= 3 * self.geo["X"].shape[1] or self.con["NR"].min()<0:
             raise NameError("节点约束数据输入有误！")
     
     def nodeForce(self, P):
         if len(P) == self.dim * self.geo["X"].shape[1]:
-            self.force["node"] = np.array(P)
+            if self.dim == 3:
+                self.force["node"] = np.array(P)
+            elif self.dim == 2:
+                self.force["node"] = np.array([0 if i%3==2 else P[i//3*2+i%3] for i in range(int(len(P)/2*3))])
             print("一共",(self.force["node"]!=0).sum(),"节点外力...")
         else:
             raise NameError("节点力数据输入有误！")
@@ -143,6 +153,9 @@ class FEM:
             fig = go.Figure(data=self.inputFigure(nodeSize,lineSize,
                                                   forceDisplaySize,constraintDisplaySize,opacity))
             # fig.update_layout(width = 1000, height = 800)
+            if self.dim == 2:
+                camera = dict(eye=dict(x=0., y=0., z=2.5))
+                fig.update_layout(scene_camera=camera)
             fig.show()
     
 # TODO:计算部分
@@ -330,6 +343,9 @@ class FEM:
             fig = go.Figure(data=self.resultFigure(deformSize,refDeformSize,undeformedDisplay,nodeSize,
                      lineSize,forceDisplaySize,constraintDisplaySize,opacity,undeformedOpacity))
             # fig.update_layout(width = 1000, height = 800)
+            if self.dim == 2:
+                camera = dict(eye=dict(x=0., y=0., z=2.5))
+                fig.update_layout(scene_camera=camera)
             fig.update_layout(title = "deform scale = "+"{:4e}".format(self.geo["deformSize"]))
             fig.show()
             
@@ -393,6 +409,8 @@ class FEM:
         for i in range(self.con["NR"].shape[0]):
             n = self.con["NR"][i] // 3
             a = self.con["NR"][i] % 3
+            if self.dim == 2 and a==2:
+                continue
             text = "<br>节点{:}<br>D{:} = {:} ".format(n, DX[a],self.con["DX"][i])
             figs.append(go.Cone(x=[self.geo[select][0,n]]*2,
                                 y=[self.geo[select][1,n]]*2,

@@ -99,28 +99,28 @@ class FEM:
             print("几何输入数据:",file=file)
             for i in range(self.geo["X"].shape[1]):
                 print("  节点 {:3} : X = {:4e} | Y = {:4e} | Z = {:4e} "\
-                      .format( i,self.geo["X"][0,i],self.geo["X"][1,i],self.geo["X"][2,i]),
+                      .format( i+1,self.geo["X"][0,i],self.geo["X"][1,i],self.geo["X"][2,i]),
                       file=file)
             print("单元输入数据:",file=file)
             t = "rod"
             print("  杆单元数据:",file=file)
             for i in range(self.unit[t]["ME"].shape[1]):
                 print("    杆单元 {:3} : 节点 = ({:2},{:2}) | E = {:4e} | A = {:4e} | L = {:4e}"\
-                      .format(i,self.unit[t]["ME"][0,i],self.unit[t]["ME"][1,i], 
+                      .format(i+1,self.unit[t]["ME"][0,i]+1,self.unit[t]["ME"][1,i]+1, 
                               self.unit[t]["E"][i] , self.unit[t]["A"][i], self.unit[t]["L"][i]),
                       file=file)
             print("约束输入数据:",file=file)
             n = ["X","Y","Z"]
             for i in range(self.con["NR"].shape[0]):
                 print("  约束 {:3} : 节点 {:2} | {} 方向 | 位移: {:4e}"\
-                      .format( i, self.con["NR"][i] // 3, n[self.con["NR"][i] % 3], self.con["DX"][i]),
+                      .format( i+1, self.con["NR"][i] // 3+1, n[self.con["NR"][i] % 3], self.con["DX"][i]),
                       file=file)
             print("节点外力输入数据:",file=file)
-            Fn = 0
+            Fn = 1
             for i in range(self.force["node"].shape[0]):
                 if self.force["node"][i] != 0:
                     print("  节点外力 {:3} : 节点 {:2} | {} 方向 | 大小: {:4e}".\
-                          format( Fn , i // 3, n[i % 3], self.force["node"][i]),
+                          format( Fn , i // 3+1, n[i % 3], self.force["node"][i]),
                           file=file)
                     Fn += 1
         
@@ -258,29 +258,29 @@ class FEM:
             print("节点位移结果:",file=file)
             for i in range(self.geo["DX"].shape[0]):
                 print("  节点位移 {:3} : 节点 {:2} | {} 方向 | 大小: {:4e}"\
-                      .format( i , i // 3, n[i % 3], self.geo["DX"][i]),file=file)
+                      .format( i+1 , i // 3+1, n[i % 3], self.geo["DX"][i]),file=file)
             print("单元内力结果:",file=file)
             t = "rod"
             print("  杆单元内力大小:",file=file)
             for i in range(self.unit[t]["ME"].shape[1]):
                 print("    杆单元 {:3} : 节点{:2}内力 = {:4e} | 节点{:2}内力 = {:4e}"\
-                      .format(i,self.unit[t]["ME"][0,i],self.unit[t]["force"][i][0],
-                              self.unit[t]["ME"][1,i], self.unit[t]["force"][i][1]),
+                      .format(i+1,self.unit[t]["ME"][0,i]+1,self.unit[t]["force"][i][0],
+                              self.unit[t]["ME"][1,i]+1, self.unit[t]["force"][i][1]),
                       file=file)
             print("  杆单元节点力:",file=file)
             for i in range(self.unit[t]["ME"].shape[1]):
                 F = self.unit[t]["nodeForce"][i]
                 print(("    杆单元 {:3} : 节点{:2}内力 X={:4e} Y={:4e} Z={:4e} "
                       "| 节点{:2}内力 = X={:4e} Y={:4e} Z={:4e}")\
-                      .format(i,self.unit[t]["ME"][0,i],F[0],F[1],F[2],
-                              self.unit[t]["ME"][1,i],F[3],F[4],F[5]),
+                      .format(i+1,self.unit[t]["ME"][0,i]+1,F[0],F[1],F[2],
+                              self.unit[t]["ME"][1,i]+1,F[3],F[4],F[5]),
                       file=file)
             print("约束反力结果:",file=file)
-            Fn = 0
+            Fn = 1
             for i in self.con["NR"]:
                 if self.force["constraint"][i] != 0:
                     print("  约束反力 {:3} : 节点 {:2} | {} 方向 | 大小: {:4e}".\
-                          format( Fn , i // 3, n[i % 3], self.force["constraint"][i]),
+                          format( Fn , i // 3+1, n[i % 3], self.force["constraint"][i]),
                           file=file)
                     Fn += 1
     
@@ -364,8 +364,8 @@ class FEM:
                                 mode='markers',
                                 marker_color="blue",
                                 marker=dict(size=10*nodeSize,opacity=opa,),
-                                name=name+'node_'+str(i),
-                                hovertemplate = name+'node_'+str(i)+text,
+                                name=name+'node_'+str(i+1),
+                                hovertemplate = 'node_'+str(i+1)+text,
                                 ))
         return figs
         
@@ -376,7 +376,7 @@ class FEM:
             n = self.unit[t]["ME"][:,i]
             if select == "X":
                 text = "<br>节点:({:},{:}) <br>E:{:4e} <br>A:{:4e} <br>L:{:4e}<br>".\
-                    format( n[0],n[1], self.unit["rod"]["E"][i],
+                    format( n[0]+1,n[1]+1, self.unit["rod"]["E"][i],
                             self.unit["rod"]["A"][i],
                             self.unit["rod"]["L"][i])
             elif select == "deformedFigureX":
@@ -384,18 +384,18 @@ class FEM:
                 text = ("<br>节点:({:2},{:2}) <br>E:{:4e} <br>A:{:4e} <br>L:{:4e}<br>"
                         "节点{:2}内力:<br> X={:4e} <br> Y={:4e} <br> Z={:4e} <br> norm={:4e} <br>"
                          "节点{:2}内力:<br> X={:4e} <br> Y={:4e} <br> Z={:4e} <br> norm={:4e}").\
-                    format( n[0],n[1], self.unit["rod"]["E"][i],
+                    format( n[0]+1,n[1]+1, self.unit["rod"]["E"][i],
                             self.unit["rod"]["A"][i],
                             self.unit["rod"]["L"][i],
-                            n[0],F[0],F[1],F[2],self.unit[t]["force"][i][0],
-                            n[1],F[3],F[4],F[5],self.unit[t]["force"][i][1])
+                            n[0]+1,F[0],F[1],F[2],self.unit[t]["force"][i][0],
+                            n[1]+1,F[3],F[4],F[5],self.unit[t]["force"][i][1])
             figs.append(go.Scatter3d(x=[self.geo[select][0,n[0]],self.geo[select][0,n[1]]],
                                 y=[self.geo[select][1,n[0]],self.geo[select][1,n[1]]],
                                 z=[self.geo[select][2,n[0]],self.geo[select][2,n[1]]],
                                 mode='lines',
                                 line=dict(color='rgba(255, 0, 0, {:})'.format(opa),width=10*lineSize),
-                                name=name+'rod_'+str(i),
-                                hovertemplate=name+'rod_'+str(i)+text))
+                                name=name+'rod_'+str(i+1),
+                                hovertemplate='rod_'+str(i+1)+text))
         return figs
     
     def rodConstraintFigure(self,constraintDisplaySize,opa,name="",select="X"):
@@ -407,7 +407,7 @@ class FEM:
             a = self.con["NR"][i] % 3
             if self.dim == 2 and a==2:
                 continue
-            text = "<br>节点{:}<br>D{:} = {:} ".format(n, DX[a],self.con["DX"][i])
+            text = "<br>节点{:}<br>D{:} = {:} ".format(n+1, DX[a],self.con["DX"][i])
             figs.append(go.Cone(x=[self.geo[select][0,n]]*2,
                                 y=[self.geo[select][1,n]]*2,
                                 z=[self.geo[select][2,n]]*2,
@@ -417,9 +417,9 @@ class FEM:
                                 sizeref=(0.4 * constraintDisplaySize),
                                 anchor="tip",
                                 showscale=False,
-                                name=name+'constraint_'+str(i),
+                                name=name+'constraint_'+str(i+1),
                                 showlegend=True,
-                                hovertemplate=name+'constraint_'+str(i)+text,
+                                hovertemplate='constraint_'+str(i+1)+text,
                                 opacity=opa
                                 ))
         return figs
@@ -448,8 +448,8 @@ class FEM:
                                 sizeref= (0.8 * forceDisplaySize*(np.abs(F[:,i]).sum()/self.force["max"])**0.5),
                                 anchor="tip",
                                 showscale=False,
-                                name=name+Ftype+"_force_"+str(Fn),
-                                hovertemplate=name+Ftype+"_force_"+str(Fn)+text,
+                                name=name+Ftype+"_force_"+str(Fn+1),
+                                hovertemplate=name+Ftype+"_force_"+str(Fn+1)+text,
                                 showlegend=True,
                                 opacity=opa
                                 ))

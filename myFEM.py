@@ -153,9 +153,7 @@ class FEM:
             fig = go.Figure(data=self.inputFigure(nodeSize,lineSize,
                                                   forceDisplaySize,constraintDisplaySize,opacity))
             # fig.update_layout(width = 1000, height = 800)
-            if self.dim == 2:
-                camera = dict(eye=dict(x=0., y=0., z=2.5))
-                fig.update_layout(scene_camera=camera)
+            fig = self.figureLayout(fig)
             fig.show()
     
 # TODO:计算部分
@@ -343,9 +341,7 @@ class FEM:
             fig = go.Figure(data=self.resultFigure(deformSize,refDeformSize,undeformedDisplay,nodeSize,
                      lineSize,forceDisplaySize,constraintDisplaySize,opacity,undeformedOpacity))
             # fig.update_layout(width = 1000, height = 800)
-            if self.dim == 2:
-                camera = dict(eye=dict(x=0., y=0., z=2.5))
-                fig.update_layout(scene_camera=camera)
+            fig = self.figureLayout(fig)
             fig.update_layout(title = "deform scale = "+"{:4e}".format(self.geo["deformSize"]))
             fig.show()
             
@@ -438,7 +434,7 @@ class FEM:
             color = "blues"
         F = self.force[Ftype].reshape(-1,3).T
         Fn = 0
-
+        # print(F)
         for i in range(F.shape[1]):
             if np.abs(F[:,i]).sum() != 0:
                 text="<br>u:{:4e}<br>v:{:4e}<br>w:{:4e}<br>norm:{:4e}"\
@@ -459,6 +455,13 @@ class FEM:
                                 ))
                 Fn += 1
         return figs
+    
+    def figureLayout(self,fig):
+        if self.dim == 2:
+            fig.update_layout(scene_camera=dict(eye=dict(x=0, y=0, z=self.geo["L"])),
+                              scene_zaxis_nticks=1, scene_zaxis_title='')
+        fig.update_layout(scene_aspectmode='data', ) # scene_aspectratio=dict(x=1, y=3, z=1)
+        return fig
 
 # TODO:类对角矩阵存储
 class diagMat:
